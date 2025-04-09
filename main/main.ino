@@ -9,19 +9,27 @@ using namespace std;
 #define screenX 240
 #define screenY 320
 
-#define K1 120
-#define K2 60
+#define K1X 150
+#define K1Y 200
+#define K2 75
 
 TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
 
-vector<pair<int,int>> projectedXYs;
-vector<float> zBuffer;
+uint8_t zBuffer[screenX*screenY];
+
+int X = 0;
+int Y = 0;
 
 void setup(void)
 {
   tft.begin();
   tft.setRotation(1);
   tft.fillScreen(TFT_BLACK);
+
+  for(int i=0; i<screenX*screenY; i++)
+  {
+      zBuffer[i] = 255;
+  }
 }
 
 float sigmoid(float val)
@@ -30,52 +38,36 @@ float sigmoid(float val)
     return sig;
 }
 
-/*
-unsigned char z2lum(int z)
+void clearZBuffer()
 {
-    unsigned char lums[13] = {'@','$','#','*','!','=',';',':','~','-',',','.',' '};
-    float a = 12*sigmoid(z);
-    z = round(a);
-    char lum = lums[z];
-    //printf("%f\n",a);
-    return lum;
+  for(int i = 0; i < screenX * screenY; i++)
+    zBuffer[i] = 255;
 }
 
-*/
 void drawPoint(float x, float y, float z)
 {
-  int projX = round((K1*x)/(K2 + z));
-  int projY = round((K1*y)/(K2 + z));
-  pair<int,int> xy;
-  xy.first = projX;
-  xy.second = projY;
+  int projX = round((K1X*x)/(K2 + z));
+  int projY = round((K1Y*y)/(K2 + z));
   
-  auto it = find(projectedXYs.begin(), projectedXYs.end(), xy);
-  int pos = distance(projectedXYs.begin(), it);
-
-  if(pos<projectedXYs.size())
+  if(projX >=0 && projX < screenX && projY >=0 && projY < screenY)
   {
-    float currentZ = zBuffer[pos];
-    if(currentZ>z)
-    {
-      zBuffer.at(pos) = z;
-      projectedXYs.at(pos) = xy;
-      tft.drawPixel(projX,projY,0xFF0000);
-    }
+    int index = projY*screenX + projX;
+    uint8_t zNorm = (uint8_t)(255 - constrain(z, 0, 255));
+    if(zNorm<zBuffer[index])
+      {
+        zBuffer[index] = zNorm;
+        tft.drawPixel(projX,projY,tft.color565(0, 0, 255));
+      }
   }
-  else
-  {
-    projectedXYs.push_back(xy);
-    zBuffer.push_back(z);
-    tft.drawPixel(projX,projY,0xFF0000);
-  }
+  
+  
 }
 
-void sphere(float Cx, float Cy, float Cz, float rad)
+void sphere(int Cx, int Cy, int Cz, int rad)
 {
-  for(float phi = 0; phi<M_PI; phi+= M_PI/180)
+  for(float phi = 0; phi<M_PI; phi+= M_PI/90)
   {
-    for(float theta = 0; theta<2*M_PI; theta+= M_PI/180)
+    for(float theta = 0; theta<2*M_PI; theta+= M_PI/90)
     {
       float x = rad*sinf(phi) * cosf(theta);
       float y = rad*sinf(phi) * sinf(theta);
@@ -88,8 +80,12 @@ void sphere(float Cx, float Cy, float Cz, float rad)
 
 void loop() 
 {
-  //tft.drawCircle(100, 100, 10, 0xFF0000);
-  sphere(100,100,10,10);
+  //tft.drawCircle(100, 100, 10, tft.color565(0, 0, 255));
+  sphere(120,Y,20,30);
+  delay(30);
+  tft.fillScreen(TFT_BLACK);
+  clearZBuffer();
+  Y++;
 }
 
 
