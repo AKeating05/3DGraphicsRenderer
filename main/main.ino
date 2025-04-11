@@ -9,7 +9,7 @@ using namespace std;
 #define screenX 240
 #define screenY 320
 
-#define K1X 150
+#define K1X 200
 #define K1Y 200
 #define K2 75
 
@@ -19,6 +19,9 @@ uint8_t zBuffer[screenX*screenY];
 
 int X = 0;
 int Y = 0;
+int Z = 0;
+
+
 
 void setup(void)
 {
@@ -26,10 +29,7 @@ void setup(void)
   tft.setRotation(1);
   tft.fillScreen(TFT_BLACK);
 
-  for(int i=0; i<screenX*screenY; i++)
-  {
-      zBuffer[i] = 255;
-  }
+  memset(zBuffer,255,sizeof(zBuffer));
 }
 
 float sigmoid(float val)
@@ -39,12 +39,11 @@ float sigmoid(float val)
 }
 
 void clearZBuffer()
-{
-  for(int i = 0; i < screenX * screenY; i++)
-    zBuffer[i] = 255;
+{ 
+  memset(zBuffer,255,sizeof(zBuffer));
 }
 
-void drawPoint(float x, float y, float z, int color[3])
+void drawPoint(float x, float y, float z, int *color)
 {
   int projX = round((K1X*x)/(K2 + z)) + (screenX/2);
   int projY = round((K1Y*y)/(K2 + z)) + (screenY/2);
@@ -56,7 +55,7 @@ void drawPoint(float x, float y, float z, int color[3])
     if(zNorm<zBuffer[index])
       {
         zBuffer[index] = zNorm;
-        tft.drawPixel(projX,projY,tft.color565(color[0],color[1],color[2]));
+        tft.drawPixel(projX,projY,tft.color565(color[2],color[1],color[0]));
       }
   }
   
@@ -64,17 +63,21 @@ void drawPoint(float x, float y, float z, int color[3])
 }
 
 //Given a vector light direction, surface normal vector and a colour, computed the dot product of the vectors and scales the colour to shade the pixel
-int* shadePoint(float lightDirVector[3], float normalVector[3], int color[3])
+int* shadePoint(int *color,float dp)
+  //float lightDirVector[3], float normalVector[3], int color[3])
 {
-  float dp = (lightDirVector[0]*normalVector[0]) + (lightDirVector[1]*normalVector[1]) + (lightDirVector[2]*normalVector[2]);
-  int red = round(constrain((sigmoid(dp) * color[0]), 0, 255));
-  int green = round(constrain((sigmoid(dp) * color[1]), 0, 255));
-  int blue = round(constrain((sigmoid(dp) * color[2]), 0, 255));
+  //float dp = (lightDirVector[0]*normalVector[0]) + (lightDirVector[1]*normalVector[1]) + (lightDirVector[2]*normalVector[2]);
+  static int newCol[3];
+  //newCol[0] = round(constrain((dp * color[0]), 0, 255));
+  //newCol[1] = round(constrain((dp * color[1]), 0, 255));
+  newCol[0] = round(constrain((dp * 255), 0, 255));
+  newCol[1] = color[1];
+  newCol[2] = round(constrain(((1/dp) * 255), 0, 255));
 
-  return {red,green,blue};
+  return newCol;
 }
 
-void sphere(int Cx, int Cy, int Cz, int rad)
+void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir)
 {
   for(float phi = 0; phi<M_PI; phi+= M_PI/180)
   {
@@ -84,8 +87,15 @@ void sphere(int Cx, int Cy, int Cz, int rad)
       float y = rad*sinf(phi) * sinf(theta);
       float z = rad*cosf(phi);
 
-      int color[3] = shadePoint();
-      drawPoint(x+Cx,y+Cy,z+Cz,color);
+      //surface normal computation (fixed lighting direction)
+      float normX = x / rad;
+      float normY = y / rad;
+      float normZ = z / rad;
+
+      float dp = normX * lightDir[0] + normY * lightDir[1] + normZ * lightDir[2];
+      dp = max(0.0f, dp);
+      int red[3] = {255,0,0};
+      drawPoint(x+Cx,y+Cy,z+Cz,shadePoint(red,dp));
     }
   }
 }
@@ -93,7 +103,19 @@ void sphere(int Cx, int Cy, int Cz, int rad)
 void loop() 
 {
   //tft.drawCircle(100, 100, 10, tft.color565(0, 0, 255));
-  sphere(X,Y,20,30);
+  for(float theta = 0; theta<2*M_PI; theta+= M_PI/24)
+  {
+    float lightDir[3] = {sinf(theta), 0, 1}; 
+    //lightDir[0] = sinf(theta);
+    sphere(X,Y,Z,20,lightDir);
+    
+    //tft.fillScreen(TFT_BLACK);
+    clearZBuffer();
+    //delay(30);
+  }
+  
+  
+  //Z++;
 }
 
 
