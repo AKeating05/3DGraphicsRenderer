@@ -17,6 +17,7 @@ TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
 
 uint8_t zBuffer[screenX*screenY];
 
+
 int X = 0;
 int Y = 0;
 int Z = 0;
@@ -27,7 +28,7 @@ void setup(void)
 {
   tft.begin();
   tft.setRotation(1);
-  tft.fillScreen(TFT_BLACK);
+  tft.fillScreen(tft.color565(150,150,150));
 
   memset(zBuffer,255,sizeof(zBuffer));
 }
@@ -68,16 +69,14 @@ int* shadePoint(int *color,float dp)
 {
   //float dp = (lightDirVector[0]*normalVector[0]) + (lightDirVector[1]*normalVector[1]) + (lightDirVector[2]*normalVector[2]);
   static int newCol[3];
-  //newCol[0] = round(constrain((dp * color[0]), 0, 255));
-  //newCol[1] = round(constrain((dp * color[1]), 0, 255));
-  newCol[0] = round(constrain((dp * 255), 0, 255));
-  newCol[1] = color[1];
-  newCol[2] = round(constrain(((1/dp) * 255), 0, 255));
+  newCol[0] = round(constrain((dp*255)+(dp*color[0]), 0, 255));
+  newCol[1] = round(constrain((dp*255)+(dp*color[1]), 0, 255));
+  newCol[2] = round(constrain((dp*255)+(dp*color[2]), 0, 255));
 
   return newCol;
 }
 
-void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir)
+void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir, int * color)
 {
   for(float phi = 0; phi<M_PI; phi+= M_PI/180)
   {
@@ -94,8 +93,8 @@ void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir)
 
       float dp = normX * lightDir[0] + normY * lightDir[1] + normZ * lightDir[2];
       dp = max(0.0f, dp);
-      int red[3] = {255,0,0};
-      drawPoint(x+Cx,y+Cy,z+Cz,shadePoint(red,dp));
+
+      drawPoint(x+Cx,y+Cy,z+Cz,shadePoint(color,dp));
     }
   }
 }
@@ -103,11 +102,12 @@ void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir)
 void loop() 
 {
   //tft.drawCircle(100, 100, 10, tft.color565(0, 0, 255));
-  for(float theta = 0; theta<2*M_PI; theta+= M_PI/24)
+  int color[3] = {255,0,0};
+  for(float theta = 0; theta<2*M_PI; theta+= M_PI/90)
   {
-    float lightDir[3] = {sinf(theta), 0, 1}; 
+    float lightDir[3] = {cosf(theta), 0, sinf(theta)}; 
     //lightDir[0] = sinf(theta);
-    sphere(X,Y,Z,20,lightDir);
+    sphere(X,Y,Z,20,lightDir, color);
     
     //tft.fillScreen(TFT_BLACK);
     clearZBuffer();
@@ -115,7 +115,7 @@ void loop()
   }
   
   
-  //Z++;
+  
 }
 
 
