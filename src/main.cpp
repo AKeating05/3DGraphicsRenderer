@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <TFT_eSPI.h> // Hardware-specific library
 #include <SPI.h>
 #define _USE_MATH_DEFINES
