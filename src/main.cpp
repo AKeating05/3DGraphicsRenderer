@@ -3,6 +3,7 @@
 #include <SPI.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "trig.h"
 
 #include <utility>
 using namespace std;
@@ -17,12 +18,12 @@ using namespace std;
 TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
 
 uint8_t zBuffer[screenX*screenY];
+float *sineLkupTable;
 
 
 int X = 0;
 int Y = 0;
 int Z = 0;
-
 
 
 void setup(void)
@@ -32,13 +33,9 @@ void setup(void)
   tft.fillScreen(tft.color565(150,150,150));
 
   memset(zBuffer,255,sizeof(zBuffer));
+  sineLkupTable = makeSinTable(180);
 }
 
-float sigmoid(float val)
-{
-    float sig = 1/(1+(pow(M_E,(-val))));
-    return sig;
-}
 
 void clearZBuffer()
 { 
@@ -83,9 +80,9 @@ void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir, int * color)
   {
     for(float theta = 0; theta<2*M_PI; theta+= M_PI/180)
     {
-      float x = rad*sinf(phi) * cosf(theta);
-      float y = rad*sinf(phi) * sinf(theta);
-      float z = rad*cosf(phi);
+      float x = rad*sine(phi,180,sineLkupTable) * cosine(theta,180,sineLkupTable);
+      float y = rad*sine(phi,180,sineLkupTable) * sine(theta,180,sineLkupTable);
+      float z = rad*cosine(phi,180,sineLkupTable);
 
       //surface normal computation (fixed lighting direction)
       float normX = x / rad;
@@ -104,9 +101,9 @@ void loop()
 {
   //tft.drawCircle(100, 100, 10, tft.color565(0, 0, 255));
   int color[3] = {255,0,0};
-  for(float theta = 0; theta<2*M_PI; theta+= M_PI/90)
+  for(float theta = 0; theta<2*M_PI; theta+= M_PI/180)
   {
-    float lightDir[3] = {cosf(theta), 0, sinf(theta)}; 
+    float lightDir[3] = {cosine(theta,180,sineLkupTable), 0, sine(theta,180,sineLkupTable)}; 
     //lightDir[0] = sinf(theta);
     sphere(X,Y,Z,20,lightDir, color);
     
@@ -118,6 +115,7 @@ void loop()
   
   
 }
+
 
 
 

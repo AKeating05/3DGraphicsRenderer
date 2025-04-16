@@ -5,9 +5,9 @@
 //creates sin table statically in memory and returns a pointer to it
 float *makeSinTable(int interval)
 {
-    float *table = (float) malloc(sizeof(float)*interval);
+    float *table = (float*) malloc(sizeof(float)*interval);
 
-    for(int i=0, i<interval; i++)
+    for(int i=0; i<interval; i++)
     {
         table[i] = sinf((M_PI*i)/interval);
     }
