@@ -18,16 +18,22 @@ float *makeSinTable(int interval)
 //compute sine using lookup table, adjust angle so it is in range 0-pi
 float sine(float theta, int interval, float *table)
 {
-    if(theta>M_PI)
-    {
-        theta = theta - M_PI;
-        int index = floor(theta/(M_PI/interval));
-        return -table[index];
-    }
-    else
-    {
-        int index = floor(theta/(M_PI/interval));
+    while (theta < 0) theta += 2 * M_PI;
+    while (theta >= 2 * M_PI) theta -= 2 * M_PI;
+
+    float step = M_PI / interval;
+
+    if (theta <= M_PI) {
+        int index = floor(theta / step);
+        if (index >= interval) index = interval - 1;
         return table[index];
+
+    } else {
+        // sin(θ) = -sin(θ - π)
+        theta -= M_PI;
+        int index = floor(theta / step);
+        if (index >= interval) index = interval - 1;
+        return -table[index];
     }
 }
 

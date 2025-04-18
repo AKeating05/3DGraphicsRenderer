@@ -14,6 +14,7 @@ using namespace std;
 #define K1X 200
 #define K1Y 200
 #define K2 75
+#define interval 120
 
 TFT_eSPI tft = TFT_eSPI(); // Invoke custom library
 
@@ -33,7 +34,7 @@ void setup(void)
   tft.fillScreen(tft.color565(150,150,150));
 
   memset(zBuffer,255,sizeof(zBuffer));
-  sineLkupTable = makeSinTable(180);
+  sineLkupTable = makeSinTable(interval);
 }
 
 
@@ -76,13 +77,13 @@ int* shadePoint(int *color,float dp)
 
 void sphere(int Cx, int Cy, int Cz, int rad, float* lightDir, int * color)
 {
-  for(float phi = 0; phi<M_PI; phi+= M_PI/180)
+  for(float phi = 0; phi<M_PI; phi+= M_PI/interval)
   {
-    for(float theta = 0; theta<2*M_PI; theta+= M_PI/180)
+    for(float theta = 0; theta<2*M_PI; theta+= M_PI/interval)
     {
-      float x = rad*sine(phi,180,sineLkupTable) * cosine(theta,180,sineLkupTable);
-      float y = rad*sine(phi,180,sineLkupTable) * sine(theta,180,sineLkupTable);
-      float z = rad*cosine(phi,180,sineLkupTable);
+      float x = rad*sine(phi,interval,sineLkupTable) * cosine(theta,interval,sineLkupTable);
+      float y = rad*sine(phi,interval,sineLkupTable) * sine(theta,interval,sineLkupTable);
+      float z = rad*cosine(phi,interval,sineLkupTable);
 
       //surface normal computation (fixed lighting direction)
       float normX = x / rad;
@@ -101,9 +102,9 @@ void loop()
 {
   //tft.drawCircle(100, 100, 10, tft.color565(0, 0, 255));
   int color[3] = {255,0,0};
-  for(float theta = 0; theta<2*M_PI; theta+= M_PI/180)
+  for(float theta = 0; theta<2*M_PI; theta+= M_PI/15)
   {
-    float lightDir[3] = {cosine(theta,180,sineLkupTable), 0, sine(theta,180,sineLkupTable)}; 
+    float lightDir[3] = {cosine(theta,interval,sineLkupTable), 0, sine(theta,interval,sineLkupTable)}; 
     //lightDir[0] = sinf(theta);
     sphere(X,Y,Z,20,lightDir, color);
     
